@@ -23,7 +23,7 @@ The Android workflow can also be started from **GitHub → Actions → Build And
 
 **Touch:** left virtual joystick to move; drag the right side to look; on-screen buttons to jump, hit, mine, place and open inventory.
 
-**Desktop:** WASD, mouse to look, Space to jump, left mouse to mine/hit, right mouse to place, E for inventory, 1–8 to select hotbar slots, Esc to release the mouse.
+**Desktop:** WASD, mouse to look, Space to jump, left mouse to mine, right mouse to place, E for inventory, 1–8 to select hotbar slots, Esc to release the mouse.
 
 ## Project status
 
