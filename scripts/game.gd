@@ -4,6 +4,7 @@ const WorldScript = preload("res://scripts/world.gd")
 const PlayerScript = preload("res://scripts/player.gd")
 const MobScript = preload("res://scripts/mob.gd")
 const HUDScript = preload("res://scripts/hud.gd")
+const TextureFactory = preload("res://scripts/texture_factory.gd")
 const SAVE_PATH := "user://blockbound_world.json"
 
 const HOTBAR_DEFAULT := [
@@ -87,6 +88,7 @@ var autosave_timer := 0.0
 
 func _ready() -> void:
 	_setup_environment()
+	TextureFactory.preload_all()
 
 	world = WorldScript.new()
 	world.name = "VoxelWorld"
