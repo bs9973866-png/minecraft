@@ -105,6 +105,8 @@ func _physics_process(delta: float) -> void:
 		velocity.y = 8.0
 	jump_requested = false
 	move_and_slide()
+	if global_position.y < -15.0 and game_ref:
+		game_ref.player_hurt(10)
 
 func raycast(max_distance: float = 6.0) -> Dictionary:
 	if camera == null:
