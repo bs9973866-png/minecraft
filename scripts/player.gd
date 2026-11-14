@@ -11,6 +11,10 @@ var acceleration := 22.0
 var jump_requested := false
 var touch_look_id := -1
 var last_touch_position := Vector2.ZERO
+var hand: MeshInstance3D
+var hand_material: StandardMaterial3D
+var bob_time := 0.0
+var base_camera_position := Vector3(0, 0.66, 0)
 
 func _ready() -> void:
 	name = "Player"
@@ -25,11 +29,47 @@ func _ready() -> void:
 
 	camera = Camera3D.new()
 	camera.name = "FirstPersonCamera"
-	camera.position = Vector3(0, 0.66, 0)
+	camera.position = base_camera_position
 	camera.current = true
 	camera.fov = 76.0
 	camera.near = 0.05
 	add_child(camera)
+	_create_first_person_hand()
+
+
+func _create_first_person_hand() -> void:
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(0.19, 0.48, 0.19)
+	hand = MeshInstance3D.new()
+	hand.name = "FirstPersonHand"
+	hand.mesh = mesh
+	hand.position = Vector3(0.36, -0.40, -0.62)
+	hand.rotation_degrees = Vector3(-12, -8, -8)
+	hand_material = StandardMaterial3D.new()
+	hand_material.albedo_color = Color("#d6a17c")
+	hand_material.roughness = 0.95
+	hand.material_override = hand_material
+	camera.add_child(hand)
+	apply_saved_skin()
+
+func apply_saved_skin() -> void:
+	if FileAccess.file_exists("user://player_skin.png"):
+		apply_skin("user://player_skin.png")
+
+func apply_skin(path: String) -> void:
+	var skin_image := Image.new()
+	var error := skin_image.load(path)
+	if error != OK:
+		return
+	if skin_image.get_width() < 48 or skin_image.get_height() < 32:
+		return
+	if skin_image.get_width() >= 64 and skin_image.get_height() >= 64:
+		skin_image = skin_image.get_region(Rect2i(40, 20, 8, 12))
+	skin_image.resize(16, 24, Image.INTERPOLATE_NEAREST)
+	var skin_texture := ImageTexture.create_from_image(skin_image)
+	if hand_material:
+		hand_material.albedo_texture = skin_texture
+		hand_material.albedo_color = Color.WHITE
 
 func setup(game_node, world_node) -> void:
 	game_ref = game_node
@@ -105,6 +145,15 @@ func _physics_process(delta: float) -> void:
 		velocity.y = 8.0
 	jump_requested = false
 	move_and_slide()
+	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
+	if is_on_floor() and horizontal_speed > 0.2:
+		bob_time += delta * minf(horizontal_speed * 1.8, 13.0)
+	else:
+		bob_time = move_toward(bob_time, 0.0, delta * 5.0)
+	camera.position = base_camera_position + Vector3(0, sin(bob_time * 2.0) * 0.025, 0)
+	if hand:
+		hand.position.y = -0.40 + sin(bob_time * 2.0) * 0.035
+		hand.rotation.x = sin(bob_time) * 0.035
 	if global_position.y < -15.0 and game_ref:
 		game_ref.player_hurt(10)
 
