@@ -38,7 +38,6 @@ const ITEM_TITLES := {
 	"cobblestone": "Булыжник",
 	"crafting_table": "Верстак",
 	"furnace": "Печь",
-	"wooden_pickaxe": "Деревянная кирка",
 	"iron_ingot": "Железный слиток",
 	"torch": "Факел",
 	"slime_gel": "Слизь",
@@ -62,7 +61,6 @@ const ITEM_SHORT_NAMES := {
 	"raw_gold": "Золото",
 	"diamond": "Алмаз",
 	"sticks": "Палки",
-	"wooden_pickaxe": "Кирка",
 	"torch": "Факел"
 }
 
@@ -70,7 +68,6 @@ const RECIPES := [
 	{"id": "planks", "label": "4 доски", "input": {"wood": 1}, "output": "planks", "count": 4},
 	{"id": "sticks", "label": "4 палки", "input": {"planks": 2}, "output": "sticks", "count": 4},
 	{"id": "crafting_table", "label": "Верстак", "input": {"planks": 4}, "output": "crafting_table", "count": 1},
-	{"id": "wooden_pickaxe", "label": "Деревянная кирка", "input": {"planks": 3, "sticks": 2}, "output": "wooden_pickaxe", "count": 1},
 	{"id": "furnace", "label": "Печь", "input": {"cobblestone": 8}, "output": "furnace", "count": 1},
 	{"id": "torch", "label": "4 факела", "input": {"coal": 1, "sticks": 1}, "output": "torch", "count": 4},
 	{"id": "iron_ingot", "label": "Железный слиток", "input": {"raw_iron": 1, "coal": 1}, "output": "iron_ingot", "count": 1}
@@ -87,7 +84,6 @@ var selected_slot := 0
 var world_seed := 0
 var game_active := false
 var autosave_timer := 0.0
-var attack_cooldown := 0.0
 
 func _ready() -> void:
 	_setup_environment()
@@ -163,7 +159,6 @@ func start_new_world(selected_mode: String) -> void:
 	else:
 		for block_id in PLACEABLE_BLOCKS:
 			inventory[block_id] = 999
-		inventory["wooden_pickaxe"] = 999
 		inventory["torch"] = 999
 
 	world.generate_world(world_seed)
@@ -204,7 +199,6 @@ func continue_world() -> void:
 	hud.refresh_inventory()
 
 func _process(delta: float) -> void:
-	attack_cooldown = maxf(0.0, attack_cooldown - delta)
 	if game_active:
 		autosave_timer += delta
 		if autosave_timer >= 45.0:
@@ -227,8 +221,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			hud.toggle_inventory()
 		elif event.keycode == KEY_ESCAPE:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		elif event.keycode == KEY_F:
-			try_attack()
 		elif event.keycode >= KEY_1 and event.keycode <= KEY_8:
 			select_hotbar_slot(event.keycode - KEY_1)
 
@@ -392,17 +384,6 @@ func place_selected_block() -> void:
 			inventory[item_id] = get_item_count(item_id) - 1
 		hud.refresh_hud()
 
-func try_attack() -> void:
-	if not game_active or attack_cooldown > 0.0 or hud.inventory_layer.visible:
-		return
-	var hit: Dictionary = player.raycast(3.5)
-	if hit.is_empty():
-		return
-	var collider = hit.get("collider")
-	if collider and collider.is_in_group("mobs") and collider.has_method("take_damage"):
-		collider.take_damage(1)
-		attack_cooldown = 0.38
-
 func player_hurt(amount: int = 1) -> void:
 	if mode == "creative" or not game_active:
 		return
@@ -414,12 +395,6 @@ func player_hurt(amount: int = 1) -> void:
 		player.teleport_to_spawn(world.get_spawn_position())
 		if hud:
 			hud.refresh_hud()
-
-func on_mob_defeated(kind: String, _position: Vector3) -> void:
-	if kind == "slime":
-		add_item("slime_gel", 1)
-	else:
-		add_item("raw_meat", 1)
 
 func save_game() -> void:
 	if not game_active or not world or not player:
