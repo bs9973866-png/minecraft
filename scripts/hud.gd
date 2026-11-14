@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 const JoystickScript = preload("res://scripts/joystick.gd")
+const TextureFactory = preload("res://scripts/texture_factory.gd")
 
 var game_ref
 var ui_root: Control
@@ -57,6 +58,10 @@ func _make_button(caption: String, callback: Callable, dimensions: Vector2 = Vec
 	var button := Button.new()
 	button.text = caption
 	button.custom_minimum_size = dimensions
+	if dimensions.x > 0.0 and dimensions.y > 0.0:
+		button.size = dimensions
+	button.icon = TextureFactory.get_texture("ui_" + caption, 2)
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.add_theme_font_size_override("font_size", 18)
 	button.add_theme_color_override("font_color", Color("#f3f6f8"))
 	button.add_theme_color_override("font_hover_color", Color("#ffffff"))
@@ -366,15 +371,15 @@ func _layout() -> void:
 	if reticle:
 		reticle.position = Vector2(w * 0.5 - 20, h * 0.5 - 20)
 	if joystick:
-		joystick.position = Vector2(28, h - 188)
+		joystick.position = Vector2(28, h - 220)
 		joystick.size = Vector2(156, 156)
 	var placements := {
 		"jump": Vector2(w - 124, h - 320),
 		"bag": Vector2(w - 124, h - 245),
-		"save": Vector2(w - 232, h - 170),
+		"save": Vector2(w - 232, h - 320),
 		"sprint": Vector2(w - 232, h - 245),
-		"mine": Vector2(w - 232, h - 92),
-		"place": Vector2(w - 124, h - 92)
+		"mine": Vector2(w - 232, h - 155),
+		"place": Vector2(w - 124, h - 155)
 	}
 	for key in placements.keys():
 		var button: Button = action_buttons.get(key)
@@ -385,7 +390,7 @@ func _layout() -> void:
 	var hotbar: HBoxContainer = game_layer.get_node_or_null("Hotbar")
 	if hotbar:
 		var total_width := 8.0 * 65.0
-		hotbar.position = Vector2((w - total_width) * 0.5, h - 68)
+		hotbar.position = Vector2((w - total_width) * 0.5, h - 66)
 		hotbar.size = Vector2(total_width, 56)
 		for slot in hotbar_buttons:
 			slot.custom_minimum_size = Vector2(62, 52)
@@ -465,6 +470,7 @@ func refresh_inventory() -> void:
 		var item_name := str(item_id)
 		var card := _make_button("%s\n× %d" % [game_ref.get_item_title(item_name), count], game_ref.assign_hotbar_item.bind(item_name), Vector2(0, 58))
 		card.add_theme_font_size_override("font_size", 14)
+		card.icon = TextureFactory.get_texture(item_name, abs(hash(item_name)) % 10)
 		card.disabled = not game_ref.is_placeable(item_name)
 		inventory_grid.add_child(card)
 
