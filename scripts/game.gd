@@ -331,7 +331,7 @@ func try_break_block() -> void:
 		int(floor(point.y - normal.y * 0.015)),
 		int(floor(point.z - normal.z * 0.015))
 	)
-	var block_type := world.get_block(block_position)
+	var block_type: String = world.get_block(block_position)
 	if block_type.is_empty() or block_type == "bedrock":
 		return
 	if not world.remove_block(block_position):
