@@ -16,7 +16,7 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		if event.pressed and active_touch_id == -1:
 			active_touch_id = event.index
-			_update_vector(event.position)
+			_update_vector(make_input_local(event).position)
 			accept_event()
 		elif not event.pressed and event.index == active_touch_id:
 			active_touch_id = -1
@@ -26,7 +26,7 @@ func _gui_input(event: InputEvent) -> void:
 			queue_redraw()
 			accept_event()
 	elif event is InputEventScreenDrag and event.index == active_touch_id:
-		_update_vector(event.position)
+		_update_vector(make_input_local(event).position)
 		accept_event()
 
 func _update_vector(local_position: Vector2) -> void:
