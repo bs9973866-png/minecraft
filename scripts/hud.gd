@@ -371,10 +371,10 @@ func refresh_inventory() -> void:
 		var count := game_ref.get_item_count(str(item_id))
 		if count <= 0:
 			continue
-		var card := PanelContainer.new()
-		card.add_theme_stylebox_override("panel", _button_style(Color("#21384a"), Color("#426775"), 9))
-		var label := _make_label("%s\n× %d" % [game_ref.get_item_title(str(item_id)), count], 14, Color("#e9f1f4"))
-		card.add_child(label)
+		var item_name := str(item_id)
+		var card := _make_button("%s\n× %d" % [game_ref.get_item_title(item_name), count], game_ref.assign_hotbar_item.bind(item_name), Vector2(0, 58))
+		card.add_theme_font_size_override("font_size", 14)
+		card.disabled = not game_ref.is_placeable(item_name)
 		inventory_grid.add_child(card)
 
 	for recipe in game_ref.get_recipes():
