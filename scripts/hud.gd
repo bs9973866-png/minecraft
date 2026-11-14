@@ -19,6 +19,12 @@ var hotbar_buttons: Array[Button] = []
 var action_buttons: Dictionary = {}
 var inventory_grid: GridContainer
 var recipe_list: VBoxContainer
+var pause_layer: Control
+var pause_panel: PanelContainer
+var skin_dialog: FileDialog
+var pause_button: Button
+var sprint_button: Button
+var sprint_enabled := false
 
 func setup(game_node) -> void:
 	game_ref = game_node
@@ -31,6 +37,7 @@ func setup(game_node) -> void:
 	_build_menu()
 	_build_game_layer()
 	_build_inventory_layer()
+	_build_pause_layer()
 	get_viewport().size_changed.connect(_layout)
 	_layout()
 
@@ -58,7 +65,14 @@ func _make_button(caption: String, callback: Callable, dimensions: Vector2 = Vec
 	button.add_theme_stylebox_override("pressed", _button_style(Color("#1b6b6d"), Color("#8fe0d0")))
 	button.add_theme_stylebox_override("disabled", _button_style(Color("#202a35"), Color("#344552")))
 	button.pressed.connect(callback)
+	button.pressed.connect(func(): _animate_button(button))
 	return button
+
+func _animate_button(button: Button) -> void:
+	var tween := create_tween()
+	button.pivot_offset = button.size * 0.5
+	button.scale = Vector2(0.96, 0.96)
+	tween.tween_property(button, "scale", Vector2.ONE, 0.13).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _make_label(caption: String, font_size: int, color: Color = Color("#edf4f6")) -> Label:
 	var label := Label.new()
@@ -181,17 +195,22 @@ func _build_game_layer() -> void:
 	var jump_button := _make_button("ПРЫЖОК", func(): game_ref.player.jump(), Vector2(96, 62))
 	var bag_button := _make_button("СУМКА", func(): toggle_inventory(), Vector2(96, 52))
 	var save_button := _make_button("СОХРАНИТЬ", func(): game_ref.save_game(), Vector2(96, 52))
+	sprint_button = _make_button("БЕГ: ВЫКЛ", func(): _toggle_sprint(), Vector2(96, 52))
 	var mine_button := _make_button("КОПАТЬ", func(): game_ref.try_break_block(), Vector2(96, 52))
 	var place_button := _make_button("СТРОИТЬ", func(): game_ref.place_selected_block(), Vector2(96, 52))
 	action_buttons = {
 		"jump": jump_button,
 		"bag": bag_button,
 		"save": save_button,
+		"sprint": sprint_button,
 		"mine": mine_button,
 		"place": place_button
 	}
 	for button in action_buttons.values():
 		game_layer.add_child(button)
+	pause_button = _make_button("Ⅱ", func(): toggle_pause(), Vector2(54, 48))
+	pause_button.add_theme_font_size_override("font_size", 24)
+	game_layer.add_child(pause_button)
 
 	var hotbar := HBoxContainer.new()
 	hotbar.name = "Hotbar"
@@ -204,6 +223,68 @@ func _build_game_layer() -> void:
 		slot.add_theme_font_size_override("font_size", 13)
 		hotbar_buttons.append(slot)
 		hotbar.add_child(slot)
+
+
+func _build_pause_layer() -> void:
+	pause_layer = Control.new()
+	pause_layer.name = "PauseOverlay"
+	pause_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pause_layer.visible = false
+	ui_root.add_child(pause_layer)
+	var shade := ColorRect.new()
+	shade.color = Color(0.008, 0.015, 0.028, 0.84)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pause_layer.add_child(shade)
+	pause_panel = PanelContainer.new()
+	pause_panel.add_theme_stylebox_override("panel", _button_style(Color("#142235"), Color("#72b7b0"), 22))
+	pause_layer.add_child(pause_panel)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 12)
+	content.alignment = BoxContainer.ALIGNMENT_CENTER
+	pause_panel.add_child(content)
+	content.add_child(_make_label("ПАУЗА", 30, Color("#f0fbfa")))
+	content.add_child(_make_button("ПРОДОЛЖИТЬ", func(): toggle_pause(), Vector2(0, 54)))
+	content.add_child(_make_button("УСТАНОВИТЬ СКИН PNG", func(): skin_dialog.popup_centered(Vector2i(700, 520)), Vector2(0, 54)))
+	content.add_child(_make_button("СОХРАНИТЬ МИР", func(): game_ref.save_game(), Vector2(0, 54)))
+	content.add_child(_make_button("В ГЛАВНОЕ МЕНЮ", func(): _leave_to_menu(), Vector2(0, 54)))
+	skin_dialog = FileDialog.new()
+	skin_dialog.title = "Выбери PNG-скин (64×64 или 64×32)"
+	skin_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	skin_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	skin_dialog.add_filter("*.png", "PNG skin")
+	skin_dialog.file_selected.connect(_on_skin_selected)
+	add_child(skin_dialog)
+
+func _on_skin_selected(path: String) -> void:
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.is_empty():
+		return
+	var file := FileAccess.open("user://player_skin.png", FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_buffer(bytes)
+	file.close()
+	game_ref.player.apply_skin("user://player_skin.png")
+
+func _toggle_sprint() -> void:
+	sprint_enabled = not sprint_enabled
+	game_ref.player.set_sprint(sprint_enabled)
+	sprint_button.text = "БЕГ: ВКЛ" if sprint_enabled else "БЕГ: ВЫКЛ"
+
+func toggle_pause() -> void:
+	if not game_layer.visible:
+		return
+	pause_layer.visible = not pause_layer.visible
+	if game_ref and game_ref.player:
+		game_ref.player.set_controls_enabled(not pause_layer.visible)
+	if not DisplayServer.is_touchscreen_available():
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if pause_layer.visible else Input.MOUSE_MODE_CAPTURED
+
+func _leave_to_menu() -> void:
+	game_ref.save_game()
+	game_ref.game_active = false
+	pause_layer.visible = false
+	show_menu(true)
 
 func _build_inventory_layer() -> void:
 	inventory_layer = Control.new()
@@ -267,6 +348,11 @@ func _layout() -> void:
 		var panel_height := minf(500.0, h - 28.0)
 		menu_panel.position = Vector2((w - panel_width) * 0.5, (h - panel_height) * 0.5)
 		menu_panel.size = Vector2(panel_width, panel_height)
+	if pause_panel:
+		var pause_width := minf(420.0, w - 32.0)
+		var pause_height := minf(430.0, h - 32.0)
+		pause_panel.position = Vector2((w - pause_width) * 0.5, (h - pause_height) * 0.5)
+		pause_panel.size = Vector2(pause_width, pause_height)
 	if inventory_panel:
 		var inv_width := minf(920.0, w - 28.0)
 		var inv_height := minf(600.0, h - 28.0)
@@ -286,6 +372,7 @@ func _layout() -> void:
 		"jump": Vector2(w - 124, h - 320),
 		"bag": Vector2(w - 124, h - 245),
 		"save": Vector2(w - 232, h - 170),
+		"sprint": Vector2(w - 232, h - 245),
 		"mine": Vector2(w - 232, h - 92),
 		"place": Vector2(w - 124, h - 92)
 	}
@@ -293,6 +380,8 @@ func _layout() -> void:
 		var button: Button = action_buttons.get(key)
 		if button:
 			button.position = placements[key]
+	if pause_button:
+		pause_button.position = Vector2(w - 72, 16)
 	var hotbar: HBoxContainer = game_layer.get_node_or_null("Hotbar")
 	if hotbar:
 		var total_width := 8.0 * 65.0
@@ -305,6 +394,7 @@ func show_menu(can_continue: bool) -> void:
 	menu_layer.visible = true
 	game_layer.visible = false
 	inventory_layer.visible = false
+	pause_layer.visible = false
 	menu_continue_button.disabled = not can_continue
 	if game_ref and game_ref.player:
 		game_ref.player.set_controls_enabled(false)
@@ -316,6 +406,7 @@ func show_game() -> void:
 	menu_layer.visible = false
 	game_layer.visible = true
 	inventory_layer.visible = false
+	pause_layer.visible = false
 	if game_ref and game_ref.player:
 		game_ref.player.visible = true
 		game_ref.player.set_controls_enabled(true)
@@ -328,7 +419,7 @@ func toggle_inventory() -> void:
 		return
 	inventory_layer.visible = not inventory_layer.visible
 	if game_ref and game_ref.player:
-		game_ref.player.set_controls_enabled(not inventory_layer.visible)
+		game_ref.player.set_controls_enabled(not inventory_layer.visible and not pause_layer.visible)
 	if inventory_layer.visible:
 		refresh_inventory()
 		if not DisplayServer.is_touchscreen_available():
