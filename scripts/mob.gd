@@ -2,11 +2,9 @@ extends CharacterBody3D
 
 var game_ref
 var mob_kind := "deer"
-var mob_health := 3
 var move_speed := 1.7
 var roam_target := Vector3.ZERO
 var roam_timer := 0.0
-var attack_timer := 0.0
 var animation_time := 0.0
 var model_root: Node3D
 
@@ -18,7 +16,6 @@ func setup(kind: String, game_node) -> void:
 	collision_layer = 2
 	collision_mask = 1
 	if kind == "slime":
-		mob_health = 4
 		move_speed = 2.8
 	_build_collision()
 	_build_model()
@@ -77,7 +74,6 @@ func _physics_process(delta: float) -> void:
 		return
 	animation_time += delta
 	roam_timer -= delta
-	attack_timer = maxf(0.0, attack_timer - delta)
 	if model_root:
 		model_root.position.y = sin(animation_time * (4.0 if mob_kind == "slime" else 2.5)) * (0.045 if mob_kind == "slime" else 0.018)
 
@@ -87,12 +83,9 @@ func _physics_process(delta: float) -> void:
 	var direction := Vector3.ZERO
 	var current_speed := move_speed
 
-	if mob_kind == "slime" and to_player.length() < 15.0:
-		direction = to_player.normalized()
-		current_speed = move_speed
-		if to_player.length() < 1.45 and attack_timer <= 0.0:
-			game_ref.player_hurt(1)
-			attack_timer = 1.5
+	if mob_kind == "slime" and to_player.length() < 7.0:
+		direction = -to_player.normalized()
+		current_speed = move_speed * 1.15
 	else:
 		if roam_timer <= 0.0 or global_position.distance_to(roam_target) < 0.8:
 			_choose_roam_target()
@@ -111,9 +104,3 @@ func _physics_process(delta: float) -> void:
 		velocity.y = -0.2
 	move_and_slide()
 
-func take_damage(amount: int = 1) -> void:
-	mob_health -= amount
-	if mob_health <= 0:
-		if game_ref:
-			game_ref.on_mob_defeated(mob_kind, global_position)
-		queue_free()
