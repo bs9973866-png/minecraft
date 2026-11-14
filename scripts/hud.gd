@@ -180,13 +180,13 @@ func _build_game_layer() -> void:
 
 	var jump_button := _make_button("ПРЫЖОК", func(): game_ref.player.jump(), Vector2(96, 62))
 	var bag_button := _make_button("СУМКА", func(): toggle_inventory(), Vector2(96, 52))
-	var hit_button := _make_button("УДАР", func(): game_ref.try_attack(), Vector2(96, 52))
+	var save_button := _make_button("СОХРАНИТЬ", func(): game_ref.save_game(), Vector2(96, 52))
 	var mine_button := _make_button("КОПАТЬ", func(): game_ref.try_break_block(), Vector2(96, 52))
 	var place_button := _make_button("СТРОИТЬ", func(): game_ref.place_selected_block(), Vector2(96, 52))
 	action_buttons = {
 		"jump": jump_button,
 		"bag": bag_button,
-		"hit": hit_button,
+		"save": save_button,
 		"mine": mine_button,
 		"place": place_button
 	}
@@ -285,7 +285,7 @@ func _layout() -> void:
 	var placements := {
 		"jump": Vector2(w - 124, h - 320),
 		"bag": Vector2(w - 124, h - 245),
-		"hit": Vector2(w - 232, h - 170),
+		"save": Vector2(w - 232, h - 170),
 		"mine": Vector2(w - 232, h - 92),
 		"place": Vector2(w - 124, h - 92)
 	}
