@@ -1,0 +1,28 @@
+; BLOCKBOUND — original mobile voxel sandbox
+config_version=5
+
+[application]
+config/name="BLOCKBOUND"
+config/description="An original mobile voxel survival sandbox."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/size/resizable=true
+window/stretch/mode="canvas_items"
+window/handheld/orientation=1
+
+[physics]
+3d/default_gravity=24.0
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+environment/defaults/default_clear_color=Color(0.36, 0.55, 0.72, 1)
+
+run/disable_stdout=false
