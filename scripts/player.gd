@@ -8,6 +8,7 @@ var controls_enabled := false
 var look_pitch := 0.0
 var move_speed := 6.5
 var acceleration := 22.0
+var sprint_enabled := false
 var jump_requested := false
 var touch_look_id := -1
 var last_touch_position := Vector2.ZERO
@@ -81,9 +82,13 @@ func set_controls_enabled(enabled: bool) -> void:
 	if not enabled:
 		move_input = Vector2.ZERO
 		velocity = Vector3.ZERO
+		sprint_enabled = false
 
 func set_move_input(value: Vector2) -> void:
 	move_input = value.limit_length(1.0)
+
+func set_sprint(enabled: bool) -> void:
+	sprint_enabled = enabled
 
 func jump() -> void:
 	jump_requested = true
@@ -137,8 +142,9 @@ func _physics_process(delta: float) -> void:
 	if move_direction.length() > 1.0:
 		move_direction = move_direction.normalized()
 
-	velocity.x = move_toward(velocity.x, move_direction.x * move_speed, acceleration * delta)
-	velocity.z = move_toward(velocity.z, move_direction.z * move_speed, acceleration * delta)
+	var current_speed := move_speed * (1.65 if sprint_enabled else 1.0)
+	velocity.x = move_toward(velocity.x, move_direction.x * current_speed, acceleration * delta)
+	velocity.z = move_toward(velocity.z, move_direction.z * current_speed, acceleration * delta)
 	if not is_on_floor():
 		velocity.y -= 24.0 * delta
 	elif jump_requested or Input.is_key_pressed(KEY_SPACE):
