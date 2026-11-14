@@ -100,8 +100,11 @@ func _ready() -> void:
 	add_child(player)
 	player.setup(self, world)
 	player.teleport_to_spawn(world.get_spawn_position())
-	player.visible = false
+	# Keep the player node visible so its child Camera3D remains an active render camera.
+	# The player has no visible body mesh, so this does not show anything in the main menu.
+	player.visible = true
 	player.set_controls_enabled(false)
+	player.camera.current = true
 
 	hud = HUDScript.new()
 	add_child(hud)
