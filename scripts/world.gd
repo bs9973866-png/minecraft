@@ -1,6 +1,8 @@
 extends Node3D
 
 const HALF_SIZE := 24
+const TextureFactoryScript = preload("res://scripts/texture_factory.gd")
+const WATER_SHADER = preload("res://shaders/water.gdshader")
 const SEA_LEVEL := 9
 
 const FACE_DEFS := [
@@ -271,7 +273,7 @@ func _get_block_material(block_type: String) -> StandardMaterial3D:
 				pixel = accent
 			texture_image.set_pixel(x, y, pixel)
 
-	var texture := ImageTexture.create_from_image(texture_image)
+	var texture := TextureFactoryScript.get_texture(block_type, abs(hash(block_type)) % 10)
 	var material := StandardMaterial3D.new()
 	material.albedo_texture = texture
 	material.vertex_color_use_as_albedo = true
@@ -293,13 +295,8 @@ func _create_water() -> void:
 	water.mesh = water_mesh
 	water.position = Vector3(0, SEA_LEVEL + 0.08, 0)
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.17, 0.43, 0.59, 0.72)
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.roughness = 0.22
-	material.metallic = 0.08
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	var material := ShaderMaterial.new()
+	material.shader = WATER_SHADER
 	water.material_override = material
 	add_child(water)
 
