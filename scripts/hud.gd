@@ -446,6 +446,7 @@ func refresh_hud() -> void:
 		var short_name: String = game_ref.get_item_short_name(item_id)
 		var quantity := "∞" if game_ref.mode == "creative" and game_ref.is_placeable(item_id) else str(count)
 		hotbar_buttons[index].text = "%s\n%s" % [short_name, quantity]
+		hotbar_buttons[index].icon = TextureFactory.get_texture(item_id, index)
 		if index == game_ref.selected_slot:
 			hotbar_buttons[index].add_theme_stylebox_override("normal", _button_style(Color("#176e70"), Color("#a2f1df"), 8))
 		else:
