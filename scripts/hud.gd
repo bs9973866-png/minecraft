@@ -346,8 +346,8 @@ func refresh_hud() -> void:
 		status_label.text = "♥ %s/10   •   %s" % [health_text, mode_text]
 	for index in range(hotbar_buttons.size()):
 		var item_id := str(game_ref.hotbar[index])
-		var count := game_ref.get_item_count(item_id)
-		var short_name := game_ref.get_item_short_name(item_id)
+		var count: int = game_ref.get_item_count(item_id)
+		var short_name: String = game_ref.get_item_short_name(item_id)
 		var quantity := "∞" if game_ref.mode == "creative" and game_ref.is_placeable(item_id) else str(count)
 		hotbar_buttons[index].text = "%s\n%s" % [short_name, quantity]
 		if index == game_ref.selected_slot:
@@ -368,7 +368,7 @@ func refresh_inventory() -> void:
 	var inventory_items: Array = game_ref.inventory.keys()
 	inventory_items.sort()
 	for item_id in inventory_items:
-		var count := game_ref.get_item_count(str(item_id))
+		var count: int = game_ref.get_item_count(str(item_id))
 		if count <= 0:
 			continue
 		var item_name := str(item_id)
