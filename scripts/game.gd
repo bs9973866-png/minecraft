@@ -281,7 +281,7 @@ func can_craft(recipe: Dictionary) -> bool:
 	return true
 
 func get_recipe_description(recipe: Dictionary) -> String:
-	var parts: Array[String] = []
+	var parts := PackedStringArray()
 	var inputs: Dictionary = recipe["input"]
 	for item_id in inputs.keys():
 		parts.append("%s ×%d" % [get_item_title(str(item_id)), int(inputs[item_id])])
@@ -310,6 +310,15 @@ func add_item(item_id: String, amount: int = 1) -> void:
 
 func select_hotbar_slot(index: int) -> void:
 	selected_slot = clampi(index, 0, hotbar.size() - 1)
+	if hud:
+		hud.refresh_hud()
+
+func assign_hotbar_item(item_id: String) -> void:
+	if not is_placeable(item_id):
+		return
+	if mode != "creative" and get_item_count(item_id) <= 0:
+		return
+	hotbar[selected_slot] = item_id
 	if hud:
 		hud.refresh_hud()
 
