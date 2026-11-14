@@ -7,7 +7,7 @@ BLOCKBOUND is an original, self-contained voxel sandbox game for Android, built 
 - Procedural 3D voxel island with hills, beaches, caves, trees, water and underground ore deposits.
 - First-person controller with mobile touch controls and desktop keyboard/mouse fallback.
 - Survival and Creative modes, hotbar, block placing/mining, inventory and starter crafting recipes.
-- Simple wandering wildlife and hostile slimes.
+- Peaceful wandering wildlife and shy slimes that move away from the player.
 - Local save/continue support.
 - Android export preset and a GitHub Actions workflow for building an installable APK.
 
